@@ -28,6 +28,9 @@ def parse_command_args() -> object:
     # add argument for "human-readable". USE -H, don't use -h! -h is reserved for --help which is created automatically.
     # check the docs for an argparse option to store this as a boolean.
     parser.add_argument("program", type=str, nargs='?', help="if a program is specified, show memory use of all associated processes. Show only total use is not.")
+    
+    parser.add_argument('-H', '--human-readable', action='store_true', help='Display memory values in human-readable format (e.g., MiB, GiB).')
+
     args = parser.parse_args()
     return args
 # create argparse function
@@ -69,10 +72,21 @@ def get_avail_mem() -> int:
 
 def pids_of_prog(app_name: str) -> list:
     "given an app name, return all pids associated with app"
+    pids = os.popen('pidof ' + app_name).read().strip()
+    if pids:
+        pids_list = pids.split()
+    else:
+        pids_list = []
+    return pids_list
     ...
 
 def rss_mem_of_pid(proc_id: str) -> int:
     "given a process id, return the resident memory used, zero if not found"
+    smaps = open(f'/proc/{proc_id}/smaps')
+    for line in smaps:
+        if 'VmRSS' in line:
+            total_rss = int(line.split()[1])
+            return total_rss
     ...
 
 def bytes_to_human_r(kibibytes: int, decimal_places: int=2) -> str:
